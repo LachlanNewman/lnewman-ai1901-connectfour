@@ -2,6 +2,7 @@
 
 from connectfour.agents.agent import HumanPlayer
 from connectfour.util import delay_move_execution
+import csv
 
 import copy
 import json
@@ -154,15 +155,19 @@ class Terrain(Canvas):
 
         result = self.b.winner()
 
+
         if result == self.game.PLAYER_ONE_ID:
             self.info.t.config(text="{} won!".format(self.game.player_one))
             self.winner = True
+            print(self.game.player_one)
         elif result == self.game.PLAYER_TWO_ID:
             self.info.t.config(text="{} won!".format(self.game.player_two))
             self.winner = True
+            print(self.game.player_two)
         elif self.b.terminal():
             self.info.t.config(text="Draw")
             self.winner = True
+            print('draw')
 
 
 def game_loop(root, game, terrain):

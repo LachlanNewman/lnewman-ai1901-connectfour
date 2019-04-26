@@ -27,7 +27,6 @@ class StudentAgent(RandomAgent):
             next_state = board.next_state(self.id, move[1])
             moves.append(move)
             vals.append(self.dfMiniMax(next_state, 1))
-        print('------------')
         bestMove = moves[vals.index(max(vals))]
         return bestMove
 
@@ -89,66 +88,82 @@ class StudentAgent(RandomAgent):
             next_state(turn)
             winner()
         """
-        # score_array = board.score_array
-        # last_move = board.last_move
-        # if(self.check_threats(board,last_move)):
-        #     return 1
-        #
-        # # check vertical count
-        # vertical_count = 0
 
-        #
-        horizonatal_lines = self.get_horizontal_lines(board)
-        vertical_lines  = self.get_vertical_lines(board)
-        diagonal_up_lines = self.get_diagonal_up_lines(board)
-        diagonal_down_lines = self.get_diagonal_down_lines(board)
-        if(self.check_threat(horizonatal_lines) or self.check_threat(vertical_lines)
-            or self.check_threat(diagonal_up_lines) or self.check_threat(diagonal_down_lines)):
-            return 0
+        evaluation_value = 0
+        for row,col in board.valid_moves():
+            next_board = board.next_state(1,col)
+            horizonatal_lines = self.get_horizontal_lines(next_board)
+            vertical_lines = self.get_vertical_lines(next_board)
+            diagonal_down_lines = self.get_diagonal_down_lines(next_board)
+            diagonal_up_lines = self.get_diagonal_up_lines(next_board)
+            lines = horizonatal_lines + vertical_lines + diagonal_down_lines + diagonal_up_lines
+            evaluation_value += self.calc_line_weights(lines)
 
-        return self.calc_line_weights(horizonatal_lines+vertical_lines+diagonal_down_lines+diagonal_up_lines)
+        # col = last_move[1]
+        # col_val = 8
+        # if col == 0 or col == 6:
+        #     col_val = 0
+        # if col == 1 or col == 5:
+        #     col_val =  1
+        # if col == 2 or col == 4:
+        #     col_val = 2
+
+        return  evaluation_value
 
 
     def calc_line_weights(self,lines):
         #for each line calc the number of times 2 appears
         player_2_cells = 0
-        player_1_cells = 0
 
-        number_of_elements = len(lines) * 1000.0
         for line in lines:
-            for cell in line:
-                count_player_2 = line.count(2)
-                player_2_cells += self.player_2_cells(line)
-                player_1_cells += self.player_1_cells(line)
-        return (player_2_cells - player_1_cells) / number_of_elements
+            player_2_cells += self.player_2_cells(line)
+        return player_2_cells
 
 
     def player_2_cells(self,line):
-        four_cells = 1000
-        three_cells = 100
-        two_cells = 10
-        one_cells = 1
+        p2_4_cells = 10000
+        p2_empty_3_cells = 1000
+        p2_empty_2_empty = 100
+        p2_2_cells = 10
+        p2_1_cells = 1
 
+        p1_4_cells = -10000
+        p1_empty_3_cells = -5000
+        p1_empty_2_empty = -500
+        p1_2_cells = -10
+        p1_1_cells = -1
+
+        count_player_1 = line.count(1)
         count_player_2 = line.count(2)
+        count_empty = line.count(0)
+        count = 0
         if count_player_2 == 4:
-            return four_cells
-        if count_player_2 == 3:
-            return three_cells
-        if count_player_2 == 2:
-            return two_cells
-        if count_player_2 == 1:
-            return one_cells
-        return 0
+            count+= p2_4_cells
+        if count_player_2 == 3 and count_empty == 1:
+            count+= p2_empty_3_cells
+        if count_player_2 == 2 and count_empty == 2:
+            if line[0] == 0 and line[3]== 0:
+                count+= p2_empty_2_empty
+            else:
+                count+= p2_2_cells
+        if count_player_2 == 1 and count_empty == 3:
+            count+= p2_1_cells
+        if count_player_1 == 4:
+            count+= p1_4_cells
+        if count_player_1 == 3 and count_empty == 1:
+                count += p1_empty_3_cells
+        if count_player_1 == 2 and count_empty == 2:
+            if line[0] == 0 and line[3]== 0:
+                count += p1_empty_2_empty
+            else:
+                count += p1_2_cells
+        if count_player_1 == 1 and count_empty == 3:
+                count += p1_1_cells
+        return count
 
     def player_1_cells(self,line):
-        two_cells = 10
-        one_cells = 1
 
-        count_player_1 = line.count(2)
-        if count_player_1 == 2:
-            return two_cells
-        if count_player_1 == 1:
-            return one_cells
+
         return 0
 
     def get_horizontal_lines(self,board):
@@ -210,230 +225,55 @@ class StudentAgent(RandomAgent):
                     lines.append(line)
         return lines
 
-    def check_threat(self,lines:list):
-        for line in lines:
-            count = 0
-            for val in line:
-                if val == 1:
-                    count+=1
-            if(count==3 and 0 in line):
-                return True
-        return False
-    # def evaluate_move(self,board,move):
-    #     row,col = move
-    #
-    #     #check_vertical
-    #     count = 0
-    #     directions = 7.0
-    #     num_pieces_needed = 3.0
-    #
-    #     for piece in range(1,board.num_to_connect):
-    #         try:
-    #             if piece == 0:
-    #                 continue
-    #             if board.get_cell_value(row + piece,col) == 2:
-    #                 count+= 1
-    #         except ValueError as e:
-    #             continue
-    #
-    #     #  check horizontal
-    #     for piece in range(-3,board.num_to_connect):
-    #         try:
-    #             if piece == 0:
-    #                 continue
-    #             if board.get_cell_value(row,col - piece) == 2:
-    #                 count+= 1
-    #         except ValueError as e:
-    #             continue
-    #
-    #     #check diagonal
-    #     for piece in range(-3,board.num_to_connect):
-    #         try:
-    #             if piece == 0:
-    #                 continue
-    #             if board.get_cell_value(row - piece ,col - piece) == 2:
-    #                 count+= 1
-    #         except ValueError as e:
-    #             continue
-    #
-    #     for piece in range(-3,board.num_to_connect):
-    #         try:
-    #             if piece == 0:
-    #                 continue
-    #             if board.get_cell_value(row + piece,col + piece) == 2:
-    #                 count+= 1
-    #         except ValueError as e:
-    #             continue
-    #
-    #     return count/ (directions * num_pieces_needed)
-
-
-    # def check_threats(self,board,move):
-    #     row,col = move
-    #
-    #     #check_vertical
-    #     count = 0
-    #     for piece in range(1,board.num_to_connect):
-    #         try:
-    #             if piece == 0:
-    #                 continue
-    #             if board.get_cell_value(row + piece,col) == 1:
-    #                 count+= 1
-    #             if board.get_cell_value(row + piece, col) == 2:
-    #                 count-= 1
-    #         except ValueError as e:
-    #             break
-    #
-    #     if(count >= 3):
-    #         return True
-    #
-    #     count = 0
-    #     for piece in range(-3,board.num_to_connect):
-    #         try:
-    #             if piece == 0:
-    #                 continue
-    #             if board.get_cell_value(row,col + piece) == 1:
-    #                 count+= 1
-    #             if board.get_cell_value(row, col + piece) == 2:
-    #                 count-= 1
-    #         except ValueError as e:
-    #             break
-    #
-    #     if(count >= 3):
-    #         return True
-    #
-    #     count = 0
-    #     for piece in range(-3,board.num_to_connect):
-    #         try:
-    #             if piece == 0:
-    #                 continue
-    #             if board.get_cell_value(row + piece ,col + piece) == 1:
-    #                 count+= 1
-    #             if board.get_cell_value(row + piece, col + piece) == 2:
-    #                 count-= 1
-    #         except ValueError as e:
-    #             break
-    #
-    #     if(count == 3):
-    #         return True
-    #
-    #     count = 0
-    #     for piece in range(-3,board.num_to_connect):
-    #         try:
-    #             if piece == 0:
-    #                 continue
-    #             if board.get_cell_value(row + piece,col - piece) == 1:
-    #                 count+= 1
-    #             if board.get_cell_value(row + piece, col - piece) == 2:
-    #                 count-= 1
-    #         except ValueError as e:
-    #             break
-    #
-    #     if(count == 3):
-    #         return True
-    #
+    # def check_threat(self,lines:list):
+    #     for line in lines:
+    #         count = 0
+    #         for val in line:
+    #             if val == 1:
+    #                 count+=1
+    #         if(count==3 and 0 in line):
+    #             return True
     #     return False
-
-    # def evaluate_vertical(self, board, cell):
-    #      player1_score = 0
-        # player2_score = 0
-        # row,col = cell
-        # directions = 8.0
-        # number_connects_needed = board.num_to_connect - 1
-        # for r in range(1,3):
-        #     try:
-        #         cell_value = board.get_cell_value(row + r, col)
-        #         if cell_value == self.id:
-        #             count += 1
-        #         elif cell_value == 0:
-        #             count + 0
-        #         else:
-        #             count-= 1
-        #     except ValueError as e:
-        #         continue
-        #
-        # for r in range(1,3):
-        #     try:
-        #         cell_value = board.get_cell_value(row - r, col)
-        #         if cell_value == self.id:
-        #             count += 1
-        #         elif cell_value == 0:
-        #             count + 0
-        #         else:
-        #             count-= 1
-        #     except ValueError as e:
-        #         continue
-        #
-        # for c in range(1, 3):
-        #     try:
-        #         cell_value = board.get_cell_value(row, col + c)
-        #         if cell_value == self.id:
-        #             count += 1
-        #         elif cell_value == 0:
-        #             count + 0
-        #         else:
-        #             count-= 1
-        #     except ValueError as e:
-        #         continue
-        #
-        # for c in range(1, 3):
-        #     try:
-        #         cell_value = board.get_cell_value(row, col - c)
-        #         if cell_value == self.id:
-        #             count += 1
-        #         elif cell_value == 0:
-        #             count + 0
-        #         else:
-        #             count-= 1
-        #     except ValueError as e:
-        #         continue
-        #
-        # for d in range(1, 3):
-        #     try:
-        #         cell_value = board.get_cell_value(cell[0] + d, cell[1] + d)
-        #         if cell_value == self.id:
-        #             count += 1
-        #         elif cell_value == 0:
-        #             count + 0
-        #         else:
-        #             count - 1
-        #     except ValueError as e:
-        #         continue
-        #
-        # for d in range(1, 3):
-        #     try:
-        #         cell_value = board.get_cell_value(cell[0] - d, cell[1] - d)
-        #         if cell_value == self.id:
-        #             count + 1
-        #         elif cell_value == 0:
-        #             count + 0
-        #         else:
-        #             count-= 1
-        #     except ValueError as e:
-        #         continue
-        #
-        # for d in range(1, 3):
-        #     try:
-        #         cell_value = board.get_cell_value(cell[0] + d, cell[1] - d)
-        #         if cell_value == self.id:
-        #             count + 1
-        #         elif cell_value == 0:
-        #             count + 0
-        #         else:
-        #             count-= 1
-        #     except ValueError as e:
-        #         continue
-        #
-        # for d in range(1, 3):
-        #     try:
-        #         cell_value = board.get_cell_value(cell[0] - d, cell[1] + d)
-        #         if cell_value == self.id:
-        #             count + 1
-        #         elif cell_value == 0:
-        #             count + 0
-        #         else:
-        #             count-= 1
-        #     except ValueError as e:
-        #         continue
-        # x = count / (directions * number_connects_needed)
-        # return x
+    #
+    # # player 1 move = odd number of free spots
+    # # player 2 move = even number of free spots
+    # # odd spot = spot belonging to and odd row
+    # # even spot = spot belonging to and even row
+    # # ODD THREAT = A threat whose empty spot is odd.
+    # # EVEN  =  THREAT A threat whose empty spot is even.
+    #
+    # def check_row_below(self,board, last_move):
+    #     last_move_row , last_move_col = last_move
+    #     board_rows = board.board
+    #     for board_row in board_rows:
+    #         for cell in board_row:
+    #             row = board_rows.index(board_row)
+    #             col = board_row.index(cell)
+    #             if cell == 1 and not self.surrouded(board,(row,col)):
+    #
+    #                 if row % 2 > 0:
+    #     #                 playeer 1 played on odd row
+    #     #                   play to left or right
+    #                     if last_move_col == col + 1 or last_move_col == col - 1:
+    #                         return 1
+    #                     else: return 0
+    #                 else:
+    #                     if last_move_row == row + 1:
+    #                         return 1
+    #                     else:
+    #                         return 0
+    #     return 0
+    #
+    #
+    # def surrouded(self, board, cell):
+    #     row,col = cell
+    #     is_surrounded = False
+    #     try:
+    #         is_surrounded = board.get_cell_value(row , col + 1 ) == 0
+    #     except ValueError as e:
+    #         print(e)
+    #     try:
+    #         is_surrounded = board.get_cell_value(row , col - 1) == 0
+    #     except ValueError as e:
+    #         print(e)
+    #     return is_surrounded
